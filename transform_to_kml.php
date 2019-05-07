@@ -1,7 +1,20 @@
 <?php
 
+// First regex:
+// [et_pb_map_pin_extended](get this)[/et_pb_map_pin_extended]
 
+// Second regex:
 // (title)(pin_address)(pin_address_lat)(pin_address_lng)( # of schools served: (n))(src)*
+
+$file = file_get_contents('schools.txt');
+$first_pin_regex = '/\[et_pb_map_pin_extended(.*?)\/et_pb_map_pin_extended\]/ms';
+
+
+preg_match_all($first_pin_regex, $file, $matches);
+
+$all_matches = implode(' ', $matches[1]);
+
+echo $all_matches;
 
 // TODO:
 //	1. Ask the user for the file name.
@@ -10,16 +23,19 @@
 function get_schools_from_file()
 {
 	$file = file_get_contents('schools.txt');
+
+	//$all_pins_from_file = '';
+	//
 	// Matches contents of title, latitude, longitude and description in that order.
 	$pin_regex = '/title="([^"]+)" pin_address="[^"]+" pin_address_lat="([^"]+)" pin_address_lng="([^"]+)"(?:(?!# of).)*(# of schools served: [0-9]*)/';
 	preg_match_all($pin_regex, $file, $matches);
 
-	// Should be count($matches[0])
+
 	$schools_sum = count($matches[0]);
 	$schools_sum_prepared = --$schools_sum;
 	$schools_sum_keys = range(0, $schools_sum_prepared);
 
-
+	// Create an array with every school as an object
 	$schools_array = array();
 	$values = array($matches[1], $matches[2], $matches[3], $matches[4]);
 	foreach($schools_sum_keys as $index => $key)
@@ -32,6 +48,7 @@ function get_schools_from_file()
 		$schools_array[$key]  = $school;
 	}
 
+	//print_r($schools_array);
 	return $schools_array;
 }
 
@@ -52,7 +69,7 @@ function transform_pins_to_placemarks()
 	  <Placemark>
 		<name>%s</name>
 		<description>%s</description>
-		<styleUrl>#icon-1899-0288D1</styleUrl>
+		<styleUrl>#icon-1899-9766d2</styleUrl>
 		<Point>
 		  <coordinates>
 			%f,%f
@@ -73,9 +90,11 @@ function create_output_file()
 '<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
-    <name>My map</name>
-    <description>My description for a map.</description>
-    <Style id="icon-1899-0288D1-normal">
+    <name>Save The Music Impact Map</name>
+    <description>
+    	We’ve helped over 2,000 schools start music programs impacting millions of children.
+	</description>
+    <Style id="icon-1899-9766d2-normal">
       <IconStyle>
         <scale>1</scale>
         <Icon>
@@ -87,7 +106,7 @@ function create_output_file()
         <scale>0</scale>
       </LabelStyle>
     </Style>
-    <Style id="icon-1899-0288D1-highlight">
+    <Style id="icon-1899-9766d2-highlight">
       <IconStyle>
         <scale>1</scale>
         <Icon>
@@ -99,18 +118,18 @@ function create_output_file()
         <scale>1</scale>
       </LabelStyle>
     </Style>
-    <StyleMap id="icon-1899-0288D1">
+    <StyleMap id="icon-1899-9766d2">
       <Pair>
         <key>normal</key>
-        <styleUrl>#icon-1899-0288D1-normal</styleUrl>
+        <styleUrl>#icon-1899-9766d2-normal</styleUrl>
       </Pair>
       <Pair>
         <key>highlight</key>
-        <styleUrl>#icon-1899-0288D1-highlight</styleUrl>
+        <styleUrl>#icon-1899-9766d2-highlight</styleUrl>
       </Pair>
     </StyleMap>
     <Folder>
-      <name>My untitled layer</name>';
+      <name>School districts</name>';
 
 	$end_of_output_file = '
     </Folder>
@@ -122,8 +141,12 @@ function create_output_file()
 	return $complete_output_file;
 }
 
-$new_file = 'map.kml';
+function init()
+{
+	$new_file = 'map.kml';
+	$output_file = create_output_file();
+	file_put_contents($new_file, $output_file);
+}
 
-$output_file = create_output_file();
+//init();
 
-file_put_contents($new_file, $output_file);
